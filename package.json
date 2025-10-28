@@ -1,7 +1,7 @@
 {
   "name": "@web3-blocks/dapp-ui",
   "version": "0.0.1",
-  "description": "A lightweight, framework-ready toolkit for seamless multi-chain wallet connections.",
+  "description": "A lightweight, framework-ready toolkit for seamless multi-chain dapps.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
