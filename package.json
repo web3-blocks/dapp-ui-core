@@ -1,0 +1,39 @@
+{
+  "name": "@web3-blocks/dapp-ui",
+  "version": "0.0.1",
+  "description": "A lightweight, framework-ready toolkit for seamless multi-chain wallet connections.",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "license": "MIT",
+  "author": "Holiday",
+  "scripts": {
+    "build": "tsup"
+  },
+  "keywords": [
+    "web3-blocks",
+    "dapp-ui",
+    "web3",
+    "ethersjs",
+    "dapp",
+    "hooks",
+    "wallet",
+    "blockchain",
+    "react",
+    "ethereum",
+    "connect",
+    "client"
+  ],
+  "homepage": "https://github.com/web3-blocks/dapp-ui-core#readme",
+  "bugs": {
+    "url": "https://github.com/web3-blocks/dapp-ui-core/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/web3-blocks/dapp-ui-core.git"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
+  }
+}
