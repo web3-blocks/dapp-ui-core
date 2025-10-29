@@ -2,15 +2,6 @@
 
 `@web3-blocks/dapp-ui` provides a modular and type-safe React toolkit built on Redux Toolkit for robust state management, it's designed for multi-chain dApps with a clean and extensible API.
 
-## Changelog
-
-- **v0.0.3** – Enhanced release
-
-  - Added `autoConnect` option to `DappUiProvider`
-  - Improved persistent connection handling
-  - Better state separation and modular Redux hooks
-  - Documentation updates
-
 ## Features
 
 - Connect and disconnect Ethereum wallets.
