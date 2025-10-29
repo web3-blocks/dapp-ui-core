@@ -4,6 +4,7 @@
 
 .env
 .DS_Store
+.vscode
 
 tsconfig.json
 tsup.config.ts

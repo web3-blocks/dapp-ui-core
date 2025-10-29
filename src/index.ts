@@ -1,1 +1,1 @@
-export * from "./blockchains";
+export * from "./networks";

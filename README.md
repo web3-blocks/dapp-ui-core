@@ -1,35 +1,32 @@
 # @web3-blocks/dapp-ui
 
-**A lightweight, framework-ready toolkit for seamless multi-chain dApps.**
-
-`@web3-blocks/dapp-ui` provides a modular and type-safe React context and hooks to interact with Ethereum-compatible wallets, manage accounts, connect/disconnect, and switch networks. It’s designed for multi-chain dApps with a clean and extensible API.
+`@web3-blocks/dapp-ui` provides a modular and type-safe React toolkit built on Redux Toolkit for robust state management, it's designed for multi-chain dApps with a clean and extensible API.
 
 ## Changelog
 
-- **v0.0.1** – Initial release
+- **v0.0.3** – Enhanced release
 
-  - DappUiProvider context
-  - Modular hooks
-  - Network switching
-  - Connect/disconnect logic
-  - SSR-safe
+  - Added `autoConnect` option to `DappUiProvider`
+  - Improved persistent connection handling
+  - Better state separation and modular Redux hooks
+  - Documentation updates
 
 ## Features
 
 - Connect and disconnect Ethereum wallets.
 - Detect wallet availability (`window.ethereum`).
 - Switch between multiple supported chains.
-- Modular hooks: `useAccount`, `useConnect`, `useDisconnect`, `useSwitchNetwork`.
-- Optional `useEthereum` wrapper hook for all-in-one access.
+- `useEthereum` wrapper hook for all-in-one access.
+- Modular hooks: `useAccount`, `useConnect`, `useDisconnect`, `useNetwork`.
+- Redux Toolkit powered state management.
+- Separate wallet and network state slices for better organization.
 - SSR-safe (Next.js / React Server Components compatible).
 - Fully typed with TypeScript.
 
 ## Installation
 
-```bash
-npm install @web3-blocks/dapp-ui
-# or
-yarn add @web3-blocks/dapp-ui
+```shell
+npm install @web3-blocks/dapp-ui@latest
 ```
 
 ## Quick Start
@@ -39,28 +36,19 @@ yarn add @web3-blocks/dapp-ui
 ```tsx
 "use client";
 
+import { mainnet, sepolia } from "viem/chains";
 import { DappUiProvider } from "@web3-blocks/dapp-ui";
-import { Chain } from "viem/chains";
 import { ConnectWallet } from "./components/ConnectWallet";
 
 const supportedChains: Chain[] = [
-  {
-    id: 1,
-    name: "Ethereum Mainnet",
-    rpcUrls: {
-      default: { http: ["https://mainnet.infura.io/v3/<YOUR_INFURA_ID>"] },
-    },
-    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-    blockExplorers: {
-      default: { name: "Etherscan", url: "https://etherscan.io" },
-    },
-  },
-  // Add more chains here...
+  mainnet,
+  sepolia,
+  // { ... custom chain ... },
 ];
 
 export default function App() {
   return (
-    <DappUiProvider supportedChains={supportedChains}>
+    <DappUiProvider supportedChains={supportedChains} autoConnect>
       <ConnectWallet />
     </DappUiProvider>
   );
@@ -68,6 +56,24 @@ export default function App() {
 ```
 
 ### 2. Use modular hooks
+
+#### `useEthereum` (all-in-one)
+
+```ts
+import { useEthereum } from "@web3-blocks/dapp-ui";
+
+const {
+  account,
+  connect: { fn: connect, loading: isConnecting, isWalletAvailable },
+  disconnect: { fn: disconnect, loading: isDisconnecting },
+  network: {
+    chains,
+    isSupportedChain,
+    switch: switchNetwork,
+    loading: isSwitchingNetwork,
+  },
+} = useEthereum();
+```
 
 #### `useAccount`
 
@@ -106,9 +112,14 @@ const { disconnect, isDisconnecting } = useDisconnect();
 #### `useSwitchNetwork`
 
 ```ts
-import { useSwitchNetwork } from "@web3-blocks/dapp-ui";
+import { useNetwork } from "@web3-blocks/dapp-ui";
 
-const { switchNetwork, chains, isSwitchingNetwork } = useSwitchNetwork();
+const {
+  switch: switchNetwork,
+  chains,
+  loading: isSwitchingNetwork,
+  isSupportedChain,
+} = useNetwork();
 
 chains.map((chain) => (
   <button
@@ -119,76 +130,6 @@ chains.map((chain) => (
     Switch to {chain.name}
   </button>
 ));
-```
-
-#### Optional: `useEthereum` (all-in-one)
-
-```ts
-import { useEthereum } from "@web3-blocks/dapp-ui";
-
-const { account, connect, disconnect, network } = useEthereum();
-```
-
-### 3. ConnectWallet Example
-
-```tsx title="ConnectWallet.tsx"
-"use client";
-
-import { useState, useEffect } from "react";
-import { useEthereum } from "@web3-blocks/dapp-ui";
-import { Button } from "./ui/button";
-
-export function ConnectWallet() {
-  const [mounted, setMounted] = useState(false);
-
-  const {
-    account: { account, isConnected, isSupportedChain },
-    connect: { connect, isConnecting, isWalletAvailable },
-    disconnect: { disconnect, isDisconnecting },
-    network: { chains, isSwitchingNetwork, switchNetwork },
-  } = useEthereum();
-
-  // Only render after client mount
-  useEffect(() => setMounted(true), []);
-
-  if (!mounted) return null;
-
-  if (!isWalletAvailable) return <p>No wallet detected</p>;
-
-  return (
-    <div className="p-6 space-y-8">
-      {!isConnected && (
-        <Button onClick={connect} disabled={isConnecting}>
-          {isConnecting ? "Connecting..." : "Connect Wallet"}
-        </Button>
-      )}
-
-      {isConnected && !isSupportedChain && (
-        <div className="space-y-2">
-          {chains.map((chain) => (
-            <Button
-              key={chain.id}
-              onClick={() => switchNetwork(chain.id)}
-              disabled={isSwitchingNetwork}
-            >
-              Switch to {chain.name}
-            </Button>
-          ))}
-        </div>
-      )}
-
-      {isConnected && (
-        <Button onClick={disconnect} disabled={isDisconnecting}>
-          {isDisconnecting ? "Disconnecting..." : "Disconnect"}
-        </Button>
-      )}
-
-      <pre className="whitespace-pre-wrap">
-        {JSON.stringify(account, null, 2)}
-      </pre>
-    </div>
-  );
-}
 ```
 
 ## Contributing

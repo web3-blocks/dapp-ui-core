@@ -16,6 +16,6 @@
     "outDir": "dist",
     "isolatedModules": true
   },
-  "include": ["src"],
+  "include": ["src", "blockchains"],
   "exclude": ["node_modules", "dist"]
 }
