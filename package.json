@@ -1,6 +1,6 @@
 {
   "name": "@web3-blocks/dapp-ui",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The Universal Web3 package manager, a clean wrapper around wagmi and viem, designed to simplify connection, network, and contract handling for any blockchain",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
