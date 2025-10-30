@@ -1,14 +1,17 @@
 {
   "name": "@web3-blocks/dapp-ui",
   "version": "1.0.0",
-  "description": "A lightweight, framework-ready toolkit for seamless multi-chain dapps.",
+  "description": "The Universal Web3 package manager, a clean wrapper around wagmi and viem, designed to simplify connection, network, and contract handling for any blockchain",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "license": "MIT",
   "author": "Holiday",
   "scripts": {
-    "build": "tsup && npm link"
+    "prebuild": "node scripts/generateNetworkTypes.mjs",
+    "build": "tsup && npm link",
+    "generate:networks": "node scripts/generateNetworkTypes.mjs",
+    "test": "vitest run"
   },
   "keywords": [
     "web3-blocks",
@@ -34,14 +37,15 @@
   },
   "devDependencies": {
     "@types/react": "^19.2.2",
+    "@types/node": "^22.8.6",
     "tsup": "^8.5.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^1.6.0"
   },
   "dependencies": {
-    "@metamask/providers": "^22.1.1",
-    "@reduxjs/toolkit": "^2.9.2",
-    "react": "^19.2.0",
-    "react-redux": "^9.2.0",
-    "viem": "^2.38.5"
+    "@tanstack/react-query": "^5.90.5",
+    "react": "^18.3.1",
+    "viem": "^2.38.5",
+    "wagmi": "^2.19.1"
   }
 }

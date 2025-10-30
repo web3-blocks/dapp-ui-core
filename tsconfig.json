@@ -14,8 +14,16 @@
     "declaration": true,
     "declarationDir": "dist/types",
     "outDir": "dist",
-    "isolatedModules": true
+    "isolatedModules": true,
+
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/core/*": ["./src/core/*"],
+      "@/networks/*": ["./src/networks/*"],
+      "@/utils/*": ["./src/utils/*"],
+      "@/hooks/*": ["./src/hooks/*"]
+    }
   },
-  "include": ["src", "blockchains"],
+  "include": ["src"],
   "exclude": ["node_modules", "dist"]
 }
