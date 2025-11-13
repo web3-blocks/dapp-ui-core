@@ -1,23 +1,30 @@
 {
   "name": "@web3-blocks/dapp-ui",
-  "version": "1.0.1",
-  "description": "The Universal Web3 package manager, a clean wrapper around wagmi and viem, designed to simplify connection, network, and contract handling for any blockchain",
+  "version": "1.0.0",
+  "description": "The Universal and TypeScript-first Web3 abstraction layer that provides a unified provider, modular network hooks, and chain-specific utilities for building decentralized applications.",
+  "license": "MIT",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
-  "license": "MIT",
-  "author": "Holiday",
+  "author": "thelastofinusa",
   "scripts": {
-    "prebuild": "node scripts/generateNetworkTypes.mjs",
-    "build": "tsup && npm link",
-    "generate:networks": "node scripts/generateNetworkTypes.mjs",
-    "test": "vitest run"
+    "genotype": "node src/scripts/genotype.mjs",
+    "prepare": "husky"
+  },
+  "homepage": "https://github.com/web3-blocks/dapp-ui-core#readme",
+  "bugs": {
+    "url": "https://github.com/web3-blocks/dapp-ui-core/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/web3-blocks/dapp-ui-core.git"
   },
   "keywords": [
     "web3-blocks",
     "dapp-ui",
     "web3",
-    "ethersjs",
+    "wagmi",
+    "viem",
     "dapp",
     "hooks",
     "wallet",
@@ -27,25 +34,22 @@
     "connect",
     "client"
   ],
-  "homepage": "https://github.com/web3-blocks/dapp-ui-core#readme",
-  "bugs": {
-    "url": "https://github.com/web3-blocks/dapp-ui-core/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/web3-blocks/dapp-ui-core.git"
-  },
   "devDependencies": {
-    "@types/react": "^19.2.2",
-    "@types/node": "^22.8.6",
+    "@tanstack/react-query": "^5.90.8",
+    "@types/react": "^19.2.4",
+    "husky": "^9.1.7",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "tsup": "^8.5.0",
     "typescript": "^5.9.3",
-    "vitest": "^1.6.0"
+    "viem": "^2.39.0"
   },
-  "dependencies": {
-    "@tanstack/react-query": "^5.90.5",
-    "react": "^18.3.1",
-    "viem": "^2.38.5",
-    "wagmi": "^2.19.1"
+  "peerDependencies": {
+    "@tanstack/react-query": "^4 || ^5",
+    "react": "^18 || ^19",
+    "react-dom": "^18 || ^19"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

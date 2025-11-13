@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+. "$(dirname "$0")/_/husky.sh"
+
+pnpm run genotype
+
+# if genotype changed files, fail the commit
+if ! git diff --exit-code -- src/constants/index.ts; then
+  echo "
+Pre-commit: Generated files are out of sync. Please stage updated files and retry."
+  exit 1
+fi
