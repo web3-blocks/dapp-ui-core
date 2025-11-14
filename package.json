@@ -1,6 +1,6 @@
 {
   "name": "@web3-blocks/dapp-ui",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "The Universal and TypeScript-first Web3 abstraction layer that provides a unified provider, modular network hooks, and chain-specific utilities for building decentralized applications.",
   "license": "MIT",
   "main": "./dist/index.js",
@@ -62,12 +62,24 @@
     "@tanstack/react-query": "^4 || ^5"
   },
   "peerDependenciesMeta": {
-    "react": { "optional": false },
-    "react-dom": { "optional": false },
-    "wagmi": { "optional": false },
-    "viem": { "optional": false },
-    "ethers": { "optional": false },
-    "@tanstack/react-query": { "optional": false }
+    "react": {
+      "optional": false
+    },
+    "react-dom": {
+      "optional": false
+    },
+    "wagmi": {
+      "optional": false
+    },
+    "viem": {
+      "optional": false
+    },
+    "ethers": {
+      "optional": false
+    },
+    "@tanstack/react-query": {
+      "optional": false
+    }
   },
   "engines": {
     "node": ">=18"
