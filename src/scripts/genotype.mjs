@@ -40,9 +40,14 @@ function validateConfig(network, dir) {
   const indexPath = path.join(dir, "index.ts");
   assert(fs.existsSync(indexPath), `Missing index.ts in '${dir}'`);
   const indexContent = fs.readFileSync(indexPath, "utf8");
+  // Accept either a direct type alias (with '=') or a type re-export with braces
+  const hasAlias = /export\s+type\s+ContractConfig\s*=\s*/.test(indexContent);
+  const hasReExport = /export\s+type\s*{\s*ContractConfig\s*}/.test(
+    indexContent
+  );
   assert(
-    /export\s+type\s+ContractConfig\s*=/.test(indexContent),
-    `Network '${network}' must export 'type ContractConfig' from ${indexPath}`
+    hasAlias || hasReExport,
+    `Network '${network}' must export 'type ContractConfig' (alias or re-export) from ${indexPath}`
   );
 }
 

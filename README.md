@@ -4,15 +4,127 @@ The **Universal and TypeScript-first Web3 abstraction layer** that provides a un
 
 ## Installation
 
-- Install with your package manager of choice (pnpm recommended):
+- Install with your package manager of choice
 
 ```bash
-pnpm add @web3-blocks/dapp-ui
+npm add @web3-blocks/dapp-ui
 ```
 
-## Getting Started
+### Peer Dependencies
 
-This section is documented on the website. Please refer to <a href="https://dappui.vercel.app/docs/installation" target="_blank" rel="noopener noreferrer"><strong>dApp/ui docs</strong></a> for application integration and usage examples.
+Install required peers that your app must provide:
+
+- `react`: ^18 || ^19
+- `react-dom`: ^18 || ^19
+- `viem`: ^2
+- `wagmi`: ^2
+- `@tanstack/react-query`: ^4 || ^5
+
+Example:
+
+```bash
+npm add react react-dom viem wagmi @tanstack/react-query @web3-blocks/dapp-ui
+```
+
+### React 19 Compatibility (Suppressing Peer Warnings)
+
+Some transitive dependencies of `wagmi` may emit a peer warning for React 19 (via `use-sync-external-store`). To silence the warning without affecting functionality, add an override/resolution in your app:
+
+- pnpm (`package.json`):
+
+```json
+{
+  "pnpm": {
+    "overrides": {
+      "use-sync-external-store": "^1.6.0"
+    }
+  }
+}
+```
+
+- npm (`package.json`):
+
+```json
+{
+  "overrides": {
+    "use-sync-external-store": "^1.6.0"
+  }
+}
+```
+
+- yarn (`package.json`):
+
+```json
+{
+  "resolutions": {
+    "use-sync-external-store": "^1.6.0"
+  }
+}
+```
+
+This does not change runtime behavior; it only removes the install-time warning when using React 19.
+
+## Quick Start
+
+Minimal React/Next.js setup for Ethereum (EVM):
+
+```tsx
+import React from "react";
+import { WagmiConfig } from "wagmi";
+import {
+  DAppUiProvider,
+  useConnect,
+  useAccount,
+  Chains,
+  createEthereumConfig,
+} from "@web3-blocks/dapp-ui";
+
+const { config } = createEthereumConfig([Chains.mainnet]);
+
+function App() {
+  const { connect, connectors, isPending, isWalletAvailable } = useConnect();
+  const { address, isConnecting, isConnected } = useAccount();
+
+  return (
+    <div>
+      <p>Wallet available: {String(isWalletAvailable)}</p>
+      <button
+        disabled={isPending || !connectors.length}
+        onClick={() => connect({ connector: connectors[0] })}
+      >
+        {isPending ? "Connecting..." : isConnected ? "Connected" : "Connect"}
+      </button>
+      <p>Address: {address}</p>
+    </div>
+  );
+}
+
+export default function Root() {
+  return (
+    <WagmiConfig config={config}>
+      <DAppUiProvider
+        network="ethereum"
+        contract={{
+          address: "0x0000000000000000000000000000000000000000",
+          abi: [],
+          chains: [Chains.mainnet],
+        }}
+      >
+        <App />
+      </DAppUiProvider>
+    </WagmiConfig>
+  );
+}
+```
+
+### Exports
+
+- Provider: `DAppUiProvider`
+- Context: `useDAppContext`
+- Types: `DAppUiProps`, `NETWORK_TYPES`, `DAppUiContextType`
+- Ethereum (EVM): `useConnect`, `useDisconnect`, `useAccount`, `Chains`, `createEthereumConfig`
+
+Hooks mirror `wagmi` behavior. `useConnect` includes a convenience flag `isWalletAvailable` in addition to wagmi’s return.
 
 ## Contributing
 
@@ -20,11 +132,19 @@ This project is open-source and welcomes contributions. The system is type-first
 
 ### Adding Networks
 
-1. Create `src/networks/<network>/index.ts` (use lowercase for `<network>`, e.g., `ethereum`, `sui`).
-2. Export `type ContractConfig` that describes that network’s contract shape.
+1. Create `src/networks/<network>/config/contract.config.ts` (use lowercase for `<network>`, e.g., `ethereum`, `sui`).
+2. Define and export `type ContractConfig` in that file.
+3. In `src/networks/<network>/index.ts`, type re-export the contract config:
 
 ```ts
-// src/networks/ethereum/index.ts
+// src/networks/<network>/index.ts
+export type { ContractConfig } from "./config/contract.config";
+```
+
+Example (EVM):
+
+```ts
+// src/networks/ethereum/config/contract.config.ts
 import type { Chain, Abi } from "viem";
 
 export type ContractConfig = {
@@ -35,11 +155,23 @@ export type ContractConfig = {
 ```
 
 ```ts
-// src/networks/sui/index.ts
+// src/networks/ethereum/index.ts
+export type { ContractConfig } from "./config/contract.config";
+```
+
+Example (Sui):
+
+```ts
+// src/networks/sui/config/contract.config.ts
 export type ContractConfig = {
   packageId: string; // Sui package identifier
   moduleName: string; // Sui module name inside the package
 };
+```
+
+```ts
+// src/networks/sui/index.ts
+export type { ContractConfig } from "./config/contract.config";
 ```
 
 ### Type Generation (What Happens and Why)
@@ -47,11 +179,12 @@ export type ContractConfig = {
 - Run the generator:
 
 ```bash
-pnpm run genotype
+npm run genotype
 ```
 
 - Don't ask me why I called is `genotype` 😑
 - The generator scans `src/networks`, validates folder names and ensures each network exports `type ContractConfig`.
+- The generator scans `src/networks`, validates folder names and ensures each network’s `index.ts` exports `type ContractConfig` (either a direct alias or a type re-export).
 - It then regenerates `src/constants/index.ts`, which contains:
   - `NETWORK_TYPES`: a union of all network keys (e.g., `"ethereum" | "sui"`).
   - `NETWORK_TYPES_ARRAY`: a readonly array form, useful for iteration and validation.
@@ -66,7 +199,7 @@ Why dynamic imports? It avoids bundling every network’s code and lets consumer
 - A pre-commit hook runs the generator. If `src/constants/index.ts` changes and isn’t staged, the commit fails with instructions.
 - The generator enforces:
   - Lowercase-only folder names.
-  - Presence of `export type ContractConfig = ...` in each network’s `index.ts`.
+  - Presence of `export type ContractConfig` in each network’s `index.ts` (alias or type re-export).
 
 ### Troubleshooting
 

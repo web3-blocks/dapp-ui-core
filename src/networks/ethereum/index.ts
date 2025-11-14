@@ -1,7 +1,3 @@
-import type { Chain, Abi } from "viem";
+export type { ContractConfig } from "./config/contract.config";
 
-export type ContractConfig = {
-  address: string;
-  abi: Abi;
-  chains?: Chain[];
-};
+export * as Chains from "viem/chains";
