@@ -1,4 +1,4 @@
-import { injected } from "wagmi";
+import { injected, useChainId } from "wagmi";
 import { useEffect, useState } from "react";
 import * as wallet from "@/networks/ethereum/hooks";
 
@@ -11,6 +11,9 @@ export function useEth() {
   const connect = wallet.useConnect();
   const disconnect = wallet.useDisconnect();
   const account = wallet.useAccount();
+  const switchNetwork = wallet.useSwitchNetwork();
+  const switchChainRes = wallet.useSwitchChain();
+  const chainId = useChainId();
 
   const [isWalletAvailable, setIsWalletAvailable] = useState(false);
 
@@ -23,6 +26,9 @@ export function useEth() {
     connect,
     disconnect,
     account,
+    switchNetwork,
+    switchChainRes,
+    chainId,
     isWalletAvailable,
     injected: injected(),
   };

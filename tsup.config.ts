@@ -6,5 +6,13 @@ export default defineConfig({
   dts: true,
   shims: true,
   skipNodeModulesBundle: true,
+  external: [
+    "react",
+    "react-dom",
+    "wagmi",
+    "viem",
+    "ethers",
+    "@tanstack/react-query",
+  ],
   clean: true,
 });

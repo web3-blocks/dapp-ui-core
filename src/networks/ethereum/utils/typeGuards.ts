@@ -1,5 +1,7 @@
 import { Chain } from "viem";
 import { ethers } from "ethers";
+import type { Address } from "viem";
+import type { ContractConfig } from "@/networks/ethereum/config/contract.config";
 
 /**
  * Type guard to check if the provided value is a valid Chain array
@@ -126,5 +128,125 @@ export function getRpcProvider(rpcUrl?: string): ethers.JsonRpcProvider {
       throw new Error("RPC endpoint rate limited. Provide a healthy RPC URL.");
     }
     throw e;
+  }
+}
+
+/**
+ * Returns the current chainId from the wallet/provider.
+ */
+export async function getCurrentChainId(): Promise<number | null> {
+  try {
+    await ensureEthereumAvailable();
+    const hex = await ethereumProvider!.request({ method: "eth_chainId" });
+    // MetaMask returns hex string like "0x1"
+    const id = typeof hex === "string" ? parseInt(hex, 16) : Number(hex);
+    return Number.isFinite(id) ? id : null;
+  } catch (e) {
+    reportError(e);
+    return null;
+  }
+}
+
+export type ChainValidationResult = {
+  ok: boolean;
+  error?: string;
+  expectedChainId?: number;
+  currentChainId?: number | null;
+};
+
+/**
+ * Validate if current wallet chain matches the default chain.
+ * Also ensures current chain is one of the supported chains.
+ */
+export async function validateActiveChain(
+  config: ContractConfig
+): Promise<ChainValidationResult> {
+  const currentChainId = await getCurrentChainId();
+  const expectedChainId = config.defaultChain.id;
+
+  if (currentChainId == null) {
+    return {
+      ok: false,
+      expectedChainId,
+      currentChainId,
+      error:
+        "Unable to determine current network. Ensure your wallet is connected.",
+    };
+  }
+
+  const supportedIds = (config.chains || []).map((c) => c.id);
+  if (!supportedIds.includes(currentChainId)) {
+    return {
+      ok: false,
+      expectedChainId,
+      currentChainId,
+      error:
+        "You are connected to an unsupported network. Switch to a supported chain.",
+    };
+  }
+
+  if (currentChainId !== expectedChainId) {
+    return {
+      ok: false,
+      expectedChainId,
+      currentChainId,
+      error:
+        "Connected network does not match the app’s default network.",
+    };
+  }
+
+  return { ok: true, expectedChainId, currentChainId };
+}
+
+/**
+ * Attempt to switch the wallet to the provided chain.
+ * Falls back to adding the chain if it’s not known.
+ */
+export async function switchToChain(chain: Chain, rpcUrl?: string): Promise<void> {
+  await ensureEthereumAvailable();
+  const params = { chainId: `0x${chain.id.toString(16)}` };
+  try {
+    await ethereumProvider!.request({
+      method: "wallet_switchEthereumChain",
+      params: [params],
+    });
+  } catch (e: any) {
+    // 4902: Unrecognized chain
+    if (e && (e.code === 4902 || `${e?.message}`.includes("Unrecognized"))) {
+      try {
+        await ethereumProvider!.request({
+          method: "wallet_addEthereumChain",
+          params: [
+            {
+              chainId: params.chainId,
+              chainName: chain.name,
+              nativeCurrency: chain.nativeCurrency,
+              rpcUrls: chain.rpcUrls?.default?.http?.length
+                ? chain.rpcUrls.default.http
+                : rpcUrl
+                ? [rpcUrl]
+                : [],
+              blockExplorerUrls: chain.blockExplorers?.default?.url
+                ? [chain.blockExplorers.default.url]
+                : [],
+            },
+          ],
+        });
+        await ethereumProvider!.request({
+          method: "wallet_switchEthereumChain",
+          params: [params],
+        });
+      } catch (addErr) {
+        reportError(addErr);
+        throw new Error(
+          "Failed to add and switch to the required network in your wallet."
+        );
+      }
+    } else {
+      reportError(e);
+      throw new Error(
+        "Network switch was rejected or failed. Please approve the request in your wallet."
+      );
+    }
   }
 }

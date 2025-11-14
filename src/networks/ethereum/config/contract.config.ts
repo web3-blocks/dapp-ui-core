@@ -5,6 +5,7 @@ import { Interface, InterfaceAbi } from "ethers";
 export type ContractConfig = {
   address: Address;
   abi: Interface | InterfaceAbi;
+  defaultChain: Chain;
   chains: Chain[];
   rpcUrl?: string;
 };

@@ -10,7 +10,10 @@
   "scripts": {
     "prepare": "husky",
     "genotype": "node src/scripts/genotype.mjs",
-    "build": "node src/scripts/genotype.mjs && tsup && npm link && cd example && npm link @web3-blocks/dapp-ui && npm run dev"
+    "build": "node src/scripts/genotype.mjs && tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage"
   },
   "homepage": "https://github.com/web3-blocks/dapp-ui-core#readme",
   "bugs": {
@@ -36,22 +39,35 @@
     "client"
   ],
   "devDependencies": {
+    "@testing-library/react": "^16.0.0",
     "@tanstack/react-query": "^5.90.8",
     "@types/react": "^19.2.4",
     "ethers": "^6.15.0",
     "husky": "^9.1.7",
+    "jsdom": "^24.1.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tsup": "^8.5.0",
     "typescript": "^5.9.3",
-    "viem": "^2.39.0"
+    "viem": "^2.39.0",
+    "vitest": "^1.6.1",
+    "wagmi": "^2.13.0"
   },
   "peerDependencies": {
-    "@tanstack/react-query": "^4 || ^5",
     "react": "^18 || ^19",
     "react-dom": "^18 || ^19",
+    "wagmi": "^2",
     "viem": "^2",
-    "wagmi": "^2"
+    "ethers": "^6",
+    "@tanstack/react-query": "^4 || ^5"
+  },
+  "peerDependenciesMeta": {
+    "react": { "optional": false },
+    "react-dom": { "optional": false },
+    "wagmi": { "optional": false },
+    "viem": { "optional": false },
+    "ethers": { "optional": false },
+    "@tanstack/react-query": { "optional": false }
   },
   "engines": {
     "node": ">=18"

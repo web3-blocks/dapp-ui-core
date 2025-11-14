@@ -12,18 +12,19 @@ npm add @web3-blocks/dapp-ui
 
 ### Peer Dependencies
 
-Install required peers that your app must provide:
+Install required peers that your app must provide. The SDK treats these as externals to prevent duplicate bundles and version conflicts:
 
 - `react`: ^18 || ^19
 - `react-dom`: ^18 || ^19
 - `viem`: ^2
 - `wagmi`: ^2
+- `ethers`: ^6
 - `@tanstack/react-query`: ^4 || ^5
 
 Example:
 
 ```bash
-npm add react react-dom viem wagmi @tanstack/react-query @web3-blocks/dapp-ui
+npm add react react-dom viem wagmi ethers @tanstack/react-query @web3-blocks/dapp-ui
 ```
 
 ### React 19 Compatibility (Suppressing Peer Warnings)
@@ -66,55 +67,109 @@ This does not change runtime behavior; it only removes the install-time warning 
 
 ## Quick Start
 
-Minimal React/Next.js setup for Ethereum (EVM):
+Minimal React/Next.js setup for Ethereum (EVM) with built-in provider:
 
 ```tsx
 import React from "react";
-import { WagmiConfig } from "wagmi";
-import {
-  DAppUiProvider,
-  useConnect,
-  useAccount,
-  Chains,
-  createEthereumConfig,
-} from "@web3-blocks/dapp-ui";
-
-const { config } = createEthereumConfig([Chains.mainnet]);
+import { DAppUiProvider, useEth, Chains } from "@web3-blocks/dapp-ui";
 
 function App() {
-  const { connect, connectors, isPending, isWalletAvailable } = useConnect();
-  const { address, isConnecting, isConnected } = useAccount();
+  const { connect, disconnect, account, switchChainRes, chainId } = useEth();
+
+  const { address, isConnected } = account;
+  const { connectSafe, isPending } = connect;
 
   return (
     <div>
-      <p>Wallet available: {String(isWalletAvailable)}</p>
+      <p>Connected: {isConnected ? address : "-"}</p>
+      <p>Chain ID: {chainId ?? "?"}</p>
+
       <button
-        disabled={isPending || !connectors.length}
-        onClick={() => connect({ connector: connectors[0] })}
+        disabled={isPending}
+        onClick={() =>
+          isConnected
+            ? disconnect.disconnect()
+            : connectSafe({ connector: connect.injected })
+        }
       >
-        {isPending ? "Connecting..." : isConnected ? "Connected" : "Connect"}
+        {isPending ? "Connecting..." : isConnected ? "Disconnect" : "Connect"}
       </button>
-      <p>Address: {address}</p>
+
+      <div>
+        <p>Available chains:</p>
+        {switchChainRes.chains?.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => switchChainRes.switchChain({ chainId: c.id })}
+            disabled={switchChainRes.isPending}
+          >
+            {c.name}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
 
 export default function Root() {
   return (
-    <WagmiConfig config={config}>
-      <DAppUiProvider
-        network="ethereum"
-        contract={{
-          address: "0x0000000000000000000000000000000000000000",
-          abi: [],
-          chains: [Chains.mainnet],
-        }}
-      >
-        <App />
-      </DAppUiProvider>
-    </WagmiConfig>
+    <DAppUiProvider
+      network="ethereum"
+      contract={{
+        address: "0x0000000000000000000000000000000000000000",
+        abi: [],
+        chains: [Chains.optimismSepolia],
+        defaultChain: Chains.optimismSepolia,
+        // Optional: rpcUrl for single-chain setups. Multi-chain uses default transports.
+      }}
+    >
+      <App />
+    </DAppUiProvider>
   );
 }
+```
+
+### Transactions with Lifecycle Callbacks
+
+```tsx
+const { contract } = useEth();
+
+async function addTask(content: string) {
+  await contract
+    .writeFn("addTask", [content], {
+      onSwitching: (msg) => console.log(msg),
+      onSwitched: (msg) => console.log(msg),
+      onSubmitted: (hash) => console.log("Tx submitted:", hash),
+      onConfirmed: (receipt) =>
+        console.log("Confirmed:", receipt.transactionHash),
+    })
+    .catch((err) => console.error("Transaction error:", err.message));
+}
+```
+
+### Subscribe to Contract Events
+
+```tsx
+const { contract } = useEth();
+
+useEffect(() => {
+  const offAdded = contract.eventFn("TaskAdded", (user, id, content) => {
+    console.log("TaskAdded", { user, id: Number(id), content });
+  });
+
+  const offToggled = contract.eventFn("TaskToggled", (user, id, completed) => {
+    console.log("TaskToggled", {
+      user,
+      id: Number(id),
+      completed: Boolean(completed),
+    });
+  });
+
+  return () => {
+    offAdded?.();
+    offToggled?.();
+  };
+}, [contract]);
 ```
 
 ### Exports
@@ -122,7 +177,12 @@ export default function Root() {
 - Provider: `DAppUiProvider`
 - Context: `useDAppContext`
 - Types: `DAppUiProps`, `NETWORK_TYPES`, `DAppUiContextType`
-- Ethereum (EVM): `useConnect`, `useDisconnect`, `useAccount`, `Chains`, `createEthereumConfig`
+- Ethereum (EVM):
+  - `useEth` (combined convenience hook exposing `account`, `connect`, `disconnect`, `contract`, `switchNetwork`, `switchChainRes`, `chainId`)
+  - Individual hooks: `useConnect`, `useDisconnect`, `useAccount`
+  - Network hooks: `useSwitchChain` (Wagmi), `useSwitchNetwork` (utility)
+  - Chains: `Chains` (from `viem/chains`)
+  - Config: `createEthereumConfig` (internal provider usage; returns Wagmi config if you need it externally)
 
 Hooks mirror `wagmi` behavior. `useConnect` includes a convenience flag `isWalletAvailable` in addition to wagmi’s return.
 
@@ -159,21 +219,6 @@ export type ContractConfig = {
 export type { ContractConfig } from "./config/contract.config";
 ```
 
-Example (Sui):
-
-```ts
-// src/networks/sui/config/contract.config.ts
-export type ContractConfig = {
-  packageId: string; // Sui package identifier
-  moduleName: string; // Sui module name inside the package
-};
-```
-
-```ts
-// src/networks/sui/index.ts
-export type { ContractConfig } from "./config/contract.config";
-```
-
 ### Type Generation (What Happens and Why)
 
 - Run the generator:
@@ -207,6 +252,118 @@ Why dynamic imports? It avoids bundling every network’s code and lets consumer
 - Invalid folder name (uppercase or symbols) → rename the folder to lowercase letters only.
 - TypeScript errors mentioning `NETWORK_CONTRACT_MAP[NETWORK_TYPES]` → ensure your `ContractConfig` matches the fields used by your provider and hooks.
 
+#### Network Switching & Chain ID
+
+- Ensure your `chains` include all networks you want to support (e.g., Optimism Sepolia and Arbitrum). If only one chain is configured with `rpcUrl`, the provider uses it; multi-chain setups use default transports per chain.
+- `chainId` comes from Wagmi and updates when MetaMask switches networks. Connect the wallet to reflect connector chain changes.
+
+#### Transactions Failing with “Failed to fetch” (-32603)
+
+- This usually indicates the wallet’s RPC endpoint is unreachable or blocked (ad-blockers or corporate proxies). Try disabling blockers on localhost and confirm MetaMask is connected to the intended chain.
+- If the contract call reverts without a reason or the contract isn’t deployed on the active chain, `writeFn` throws a clear message instead of a raw `CALL_EXCEPTION`.
+
+## Dependency Management (SDK Consumers)
+
+- The SDK externalizes peers (`react`, `react-dom`, `wagmi`, `viem`, `ethers`, `@tanstack/react-query`) to avoid duplicate installations and reduce bundle bloat.
+- Use consistent version ranges in your app. Recommended:
+  - `react`, `react-dom`: `^18 || ^19`
+  - `wagmi`: `^2`
+  - `viem`: `^2`
+  - `ethers`: `^6`
+  - `@tanstack/react-query`: `^4 || ^5`
+- If you are missing a required peer, install it explicitly. The library does not bundle peers by design.
+- If you encounter peer version warnings, set `overrides`/`resolutions`:
+
+  - pnpm (`package.json`):
+
+  ```json
+  {
+    "pnpm": {
+      "overrides": {
+        "use-sync-external-store": "^1.6.0",
+        "react": "^19",
+        "react-dom": "^19"
+      }
+    }
+  }
+  ```
+
+  - npm (`package.json`):
+
+  ```json
+  {
+    "overrides": {
+      "use-sync-external-store": "^1.6.0",
+      "react": "^19",
+      "react-dom": "^19"
+    }
+  }
+  ```
+
+  - yarn (`package.json`):
+
+  ```json
+  {
+    "resolutions": {
+      "use-sync-external-store": "^1.6.0",
+      "react": "^19",
+      "react-dom": "^19"
+    }
+  }
+  ```
+
 ## License
 
 - MIT © <a href="https://x.com/dapp_ui" target="_blank" rel="noopener noreferrer"><strong>dApp/ui</strong></a>
+- React 19 peer warning: `use-sync-external-store`
+
+If you see a peer warning like:
+
+```
+✕ unmet peer react@"^16.8.0 || ^17.0.0 || ^18.0.0": found 19.x
+```
+
+This comes from a transitive dependency chain (`wagmi` → WalletConnect stack → `valtio` → `use-sync-external-store@1.2.0`) that only declares React up to 18.
+
+To silence the warning and stay compatible with React 19, override `use-sync-external-store` to a React-19-compatible release (≥ 1.6.0):
+
+- npm (`package.json`):
+
+```json
+{
+  "overrides": {
+    "use-sync-external-store": "^1.6.0"
+  }
+}
+```
+
+- pnpm (`package.json`):
+
+```json
+{
+  "pnpm": {
+    "overrides": {
+      "use-sync-external-store": "^1.6.0"
+    }
+  }
+}
+```
+
+- yarn (`package.json`):
+
+```json
+{
+  "resolutions": {
+    "use-sync-external-store": "^1.6.0"
+  }
+}
+```
+
+Alternatively (Yarn Berry), extend the peer range without changing versions:
+
+```yaml
+packageExtensions:
+  use-sync-external-store@*:
+    peerDependencies:
+      react: ">=16.8.0 <21"
+```
