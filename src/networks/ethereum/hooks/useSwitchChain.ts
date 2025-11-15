@@ -1,19 +1,18 @@
 import { useMemo } from "react";
-import { useChainId, useSwitchChain } from "wagmi";
-import type { Chain } from "wagmi/chains";
+import { useChainId, useSwitchChain as wagmiSwitchChain } from "wagmi";
 import { useDAppContext } from "@/provider/context";
 
-export type SwitchChainHook = ReturnType<typeof useSwitchChain> & {
+export type SwitchChainHook = ReturnType<typeof wagmiSwitchChain> & {
   currentChainId: number | null;
   targetChainId: number;
   isCorrectChain: boolean;
 };
 
-export function useSwitchChainHook(): SwitchChainHook {
+export function useSwitchChain(): SwitchChainHook {
   const chainId = useChainId();
   const { contract } = useDAppContext();
   const targetChainId = useMemo(() => contract.defaultChain.id, [contract]);
-  const result = useSwitchChain();
+  const result = wagmiSwitchChain();
 
   const isCorrectChain = Number(chainId) === Number(targetChainId);
 
@@ -24,4 +23,3 @@ export function useSwitchChainHook(): SwitchChainHook {
     isCorrectChain,
   };
 }
-

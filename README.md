@@ -74,7 +74,7 @@ import React from "react";
 import { DAppUiProvider, useEth, Chains } from "@web3-blocks/dapp-ui";
 
 function App() {
-  const { connect, disconnect, account, switchChainRes, chainId } = useEth();
+  const { connect, disconnect, account, switchChain, chainId } = useEth();
 
   const { address, isConnected } = account;
   const { connectSafe, isPending } = connect;
@@ -97,11 +97,11 @@ function App() {
 
       <div>
         <p>Available chains:</p>
-        {switchChainRes.chains?.map((c) => (
+        {switchChain.chains?.map((c) => (
           <button
             key={c.id}
-            onClick={() => switchChainRes.switchChain({ chainId: c.id })}
-            disabled={switchChainRes.isPending}
+            onClick={() => switchChain.switchChain({ chainId: c.id })}
+            disabled={switchChain.isPending}
           >
             {c.name}
           </button>
@@ -178,9 +178,9 @@ useEffect(() => {
 - Context: `useDAppContext`
 - Types: `DAppUiProps`, `NETWORK_TYPES`, `DAppUiContextType`
 - Ethereum (EVM):
-  - `useEth` (combined convenience hook exposing `account`, `connect`, `disconnect`, `contract`, `switchNetwork`, `switchChainRes`, `chainId`)
+  - `useEth` (combined convenience hook exposing `account`, `connect`, `disconnect`, `contract`, `switchChain`, `chainId`)
   - Individual hooks: `useConnect`, `useDisconnect`, `useAccount`
-  - Network hooks: `useSwitchChain` (Wagmi), `useSwitchNetwork` (utility)
+  - Network hooks: `useSwitchChain` (Wagmi)
   - Chains: `Chains` (from `viem/chains`)
   - Config: `createEthereumConfig` (internal provider usage; returns Wagmi config if you need it externally)
 

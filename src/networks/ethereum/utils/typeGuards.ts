@@ -1,7 +1,6 @@
 import { Chain } from "viem";
 import { ethers } from "ethers";
-import type { Address } from "viem";
-import type { ContractConfig } from "@/networks/ethereum/config/contract.config";
+import type { ContractConfig } from "../config/contract.config";
 
 /**
  * Type guard to check if the provided value is a valid Chain array
@@ -190,8 +189,7 @@ export async function validateActiveChain(
       ok: false,
       expectedChainId,
       currentChainId,
-      error:
-        "Connected network does not match the app’s default network.",
+      error: "Connected network does not match the app’s default network.",
     };
   }
 
@@ -202,7 +200,10 @@ export async function validateActiveChain(
  * Attempt to switch the wallet to the provided chain.
  * Falls back to adding the chain if it’s not known.
  */
-export async function switchToChain(chain: Chain, rpcUrl?: string): Promise<void> {
+export async function switchToChain(
+  chain: Chain,
+  rpcUrl?: string
+): Promise<void> {
   await ensureEthereumAvailable();
   const params = { chainId: `0x${chain.id.toString(16)}` };
   try {

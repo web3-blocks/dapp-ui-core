@@ -1,18 +1,24 @@
 import { createConfig, http } from "wagmi";
-import { Chain, mainnet } from "wagmi/chains";
+import type { Config } from "wagmi";
+import { Chain } from "wagmi/chains";
 import * as wagmiConnector from "wagmi/connectors";
 
-const defaultChains = [mainnet];
-
-export function createEthereumConfig(chains?: Array<Chain>, rpcUrl?: string) {
-  const configChains = chains && chains.length > 0 ? chains : defaultChains;
+export function createEthereumConfig(
+  chains?: Array<Chain>,
+  rpcUrl?: string
+): { config: Config } {
+  if (!chains || chains.length === 0) {
+    throw new Error("No chains provided. Configure at least one chain.");
+  }
+  const configChains = chains;
 
   // Build transports map per chain.
   // If only one chain is configured and an rpcUrl is provided, use it for that chain.
   // Otherwise, use default http() for each chain to respect per-chain RPCs.
+  const firstChainId = configChains[0]?.id;
   const transports = Object.fromEntries(
     configChains.map((c) => {
-      if (rpcUrl && configChains.length === 1) {
+      if (rpcUrl && c.id === firstChainId) {
         return [c.id, http(rpcUrl)];
       }
       return [c.id, http()];
@@ -28,5 +34,4 @@ export function createEthereumConfig(chains?: Array<Chain>, rpcUrl?: string) {
   return { config };
 }
 
-// For backward compatibility
-export const wagmiConfig = createEthereumConfig().config;
+export {};

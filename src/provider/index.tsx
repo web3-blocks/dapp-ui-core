@@ -1,7 +1,7 @@
 "use client";
 
-import { Chain, http } from "viem";
-import React, { useEffect, useMemo, useState } from "react";
+import { Chain } from "viem";
+import React, { useMemo, useState } from "react";
 import { createConfig, WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -9,7 +9,6 @@ import { DAppUiContext } from "./context";
 import { DAppUiProps, NETWORK_TYPES } from "@/constants";
 import { validateChainConfig } from "@/networks/ethereum/utils/typeGuards";
 import { createEthereumConfig } from "@/networks/ethereum/config/wallet.config";
-import { validateActiveChain } from "@/networks/ethereum/utils/typeGuards";
 
 export function DAppUiProvider<N extends NETWORK_TYPES>({
   children,
@@ -48,27 +47,6 @@ export function DAppUiProvider<N extends NETWORK_TYPES>({
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
           <DAppUiContext.Provider value={{ network, contract }}>
-            {/** Chain validation error reporting without blocking the app */}
-            {/** This effect logs a clear error if the connected chain mismatches */}
-            {/** It does not prevent connections nor render blocking UI */}
-            {/** Consumers can use useSwitchNetwork for active switching */}
-            {React.createElement(() => {
-              useEffect(() => {
-                (async () => {
-                  try {
-                    const result = await validateActiveChain(contract);
-                    if (!result.ok) {
-                      console.error(
-                        `[DAppUi] Network mismatch: connected chainId=${result.currentChainId}, expected chainId=${result.expectedChainId}. ${result.error}`
-                      );
-                    }
-                  } catch (e) {
-                    console.error(e);
-                  }
-                })();
-              }, [contract]);
-              return null;
-            })}
             {children}
           </DAppUiContext.Provider>
         </QueryClientProvider>

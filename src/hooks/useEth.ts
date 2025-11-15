@@ -11,8 +11,7 @@ export function useEth() {
   const connect = wallet.useConnect();
   const disconnect = wallet.useDisconnect();
   const account = wallet.useAccount();
-  const switchNetwork = wallet.useSwitchNetwork();
-  const switchChainRes = wallet.useSwitchChain();
+  const switchChain = wallet.useSwitchChain();
   const chainId = useChainId();
 
   const [isWalletAvailable, setIsWalletAvailable] = useState(false);
@@ -26,8 +25,7 @@ export function useEth() {
     connect,
     disconnect,
     account,
-    switchNetwork,
-    switchChainRes,
+    switchChain,
     chainId,
     isWalletAvailable,
     injected: injected(),

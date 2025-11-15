@@ -6,6 +6,7 @@ import {
   switchToChain,
   getRpcProvider,
 } from "../utils/typeGuards";
+import { ethereumProvider } from "../utils/typeGuards";
 import { useDAppContext } from "@/provider/context";
 import type { Chain } from "wagmi/chains";
 
@@ -24,11 +25,23 @@ export function useContract() {
 
   async function readFn(fnName: string, args?: any[]) {
     try {
+      const validation = await validateActiveChain(contract);
+      if (!validation.ok) {
+        throw new Error(
+          `Wrong network: connected chainId=${
+            validation.currentChainId ?? "?"
+          }, expected chainId=${validation.expectedChainId}. ${
+            validation.error ?? "Switch to the default chain."
+          }`
+        );
+      }
       const instance = await getContract();
       return await (instance as any)[fnName](...(args || []));
     } catch (e) {
       reportError(e);
-      throw e;
+      throw e instanceof Error
+        ? e
+        : new Error("Read failed. Check network and retry.");
     }
   }
 
@@ -105,7 +118,13 @@ export function useContract() {
     listener: (...args: EventArgs) => void
   ): () => void {
     try {
-      const provider = getRpcProvider(contract.rpcUrl);
+      let provider: ethers.Provider;
+      // Prefer the user's wallet provider in-browser to avoid public RPC CORS/rate limits
+      if (ethereumProvider) {
+        provider = new ethers.BrowserProvider(ethereumProvider);
+      } else {
+        provider = getRpcProvider(contract.rpcUrl);
+      }
       const readContract = new ethers.Contract(
         contract.address,
         contract.abi,
